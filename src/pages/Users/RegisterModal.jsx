@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ROLES } from './constants';
 
 export default function RegisterModal({ onClose, onSubmit, departments, designations, loading }) {
     const [form, setForm] = useState({
@@ -11,7 +10,7 @@ export default function RegisterModal({ onClose, onSubmit, departments, designat
         last_name:      '',
         department_id:  '',
         designation_id: '',
-        role:           'User',
+        role:           'Admin',
     });
 
     const filteredDesignations = form.department_id
@@ -19,18 +18,6 @@ export default function RegisterModal({ onClose, onSubmit, departments, designat
         : designations;
 
     const field = (key, value) => setForm(f => ({ ...f, [key]: value }));
-
-    // Check if password should be shown
-    const isAdmin = form.role === 'Admin';
-
-    // Optional: clear password when switching away from Admin
-    const handleRoleChange = (e) => {
-        const newRole = e.target.value;
-        field('role', newRole);
-        if (newRole !== 'Admin') {
-            field('password', ''); // reset password when hiding
-        }
-    };
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -46,17 +33,8 @@ export default function RegisterModal({ onClose, onSubmit, departments, designat
                     </button>
                 </div>
 
-                <form 
-                    onSubmit={e => {
-                        e.preventDefault();
-                        // Optional: prevent sending empty password for non-admin
-                        if (!isAdmin) {
-                            const { password, ...formWithoutPassword } = form;
-                            onSubmit(formWithoutPassword);
-                        } else {
-                            onSubmit(form);
-                        }
-                    }} 
+                <form
+                    onSubmit={e => { e.preventDefault(); onSubmit(form); }}
                     className="space-y-4"
                 >
 
@@ -114,36 +92,18 @@ export default function RegisterModal({ onClose, onSubmit, departments, designat
                         />
                     </div>
 
-                                        {/* Role Selector – moved up as requested */}
+                    {/* Password */}
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Role *</label>
-                        <select
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password *</label>
+                        <input
                             required
-                            value={form.role}
-                            onChange={handleRoleChange}
+                            type="password"
+                            value={form.password}
+                            onChange={e => field('password', e.target.value)}
+                            placeholder="••••••••"
                             className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            {ROLES.map(r => (
-                                <option key={r} value={r}>{r}</option>
-                            ))}
-                        </select>
+                        />
                     </div>
-
-
-                    {/* ── CONDITIONAL PASSWORD FIELD ── */}
-                    {isAdmin && (
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password *</label>
-                            <input
-                                required={isAdmin}   // only required when visible
-                                type="password"
-                                value={form.password}
-                                onChange={e => field('password', e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                    )}
 
                     {/* Department + Designation */}
                     <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,4 @@
-export const ROLES = ['Admin', 'Manager', 'Engineer', 'Operator', 'Reporter', 'User'];
+export const ROLES = ['Admin'];
 
 export const getRoles = (roles) => {
     if (!roles) return [];

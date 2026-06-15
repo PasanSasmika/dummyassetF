@@ -3,20 +3,41 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loginUser, clearError } from '../features/auth/authSlice';
 
+const KEY_TO_PATH = {
+  dashboard:        '/dashboard',
+  assets:           '/assets',
+  salvaged:         '/salvaged',
+  assignments:      '/assignments',
+  'return-history': '/return-history',
+  'gate-passes':    '/gate-passes',
+  history:          '/history',
+  repairs:          '/repairs',
+  components:       '/locations',
+  users:            '/users',
+  departments:      '/departments',
+  audit:            '/audit',
+  settings:         '/settings',
+};
+
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading, user  , error } = useSelector(state => state.auth);
+  const { loading, user, error } = useSelector(state => state.auth);
 
   const [form, setForm] = useState({ email: '', password: '', rememberMe: false });
   const [showPass, setShowPass] = useState(false);
-const [loginError, setLoginError] = useState('');
-  const from = location.state?.from?.pathname || '/dashboard';
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    if (user) navigate(from, { replace: true });
-  }, [user, navigate, from]);
+    if (!user) return;
+    const fallback = location.state?.from?.pathname;
+    if (fallback) { navigate(fallback, { replace: true }); return; }
+    if (user.is_super_admin) { navigate('/dashboard', { replace: true }); return; }
+    const access = user.sidebar_access || [];
+    const firstPath = access.map(k => KEY_TO_PATH[k]).find(Boolean) || '/dashboard';
+    navigate(firstPath, { replace: true });
+  }, [user, navigate]);
 
   useEffect(() => {
     return () => dispatch(clearError());

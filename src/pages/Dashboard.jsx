@@ -155,9 +155,14 @@ export default function Dashboard() {
   
   const [isExporting, setIsExporting] = useState(false);
 
+  const { user }                                   = useSelector(s => s.auth);
   const { list: rawAssets,      loading: loadingA } = useSelector(s => s.assets);
   const { list: rawAssignments, loading: loadingM } = useSelector(s => s.assignments);
   const { list: rawUsers                          } = useSelector(s => s.users);
+
+  const isSuperAdmin  = user?.is_super_admin === true;
+  const sidebarAccess = user?.sidebar_access || [];
+  const hasAccess     = (key) => isSuperAdmin || sidebarAccess.includes(key);
 
   const assets      = safeList(rawAssets);
   const assignments = safeList(rawAssignments);
@@ -548,15 +553,15 @@ export default function Dashboard() {
         {/* ══ KPI ROW ════════════════════════════════════════ */}
         <div className="grid grid-cols-5 gap-4 mb-7">
           <KpiCard label="Total Assets"   value={kpi.total}     sub="All registered"
-            Icon={TbPackage}         accent="blue"    onClick={() => navigate('/assets')} />
+            Icon={TbPackage}         accent="blue"    onClick={hasAccess('assets')       ? () => navigate('/assets')      : undefined} />
           <KpiCard label="Available"      value={kpi.available} sub="Ready to assign"
-            Icon={TbCircleCheck}     accent="emerald" onClick={() => navigate('/assets')} />
+            Icon={TbCircleCheck}     accent="emerald" onClick={hasAccess('assets')       ? () => navigate('/assets')      : undefined} />
           <KpiCard label="Active Assigns" value={kpi.active}    sub="Currently out"
-            Icon={TbArrowUpRight}    accent="indigo"  onClick={() => navigate('/assignments')} />
+            Icon={TbArrowUpRight}    accent="indigo"  onClick={hasAccess('assignments')  ? () => navigate('/assignments') : undefined} />
           <KpiCard label="Overdue"        value={kpi.overdue}   sub="Past return date"
-            Icon={TbClockExclamation}accent="red"     onClick={() => navigate('/returns')} />
+            Icon={TbClockExclamation}accent="red"     onClick={hasAccess('return-history') ? () => navigate('/returns')  : undefined} />
           <KpiCard label="Active Users"   value={kpi.users}     sub="Non-inactive accounts"
-            Icon={TbUsers}           accent="violet"  onClick={() => navigate('/users')} />
+            Icon={TbUsers}           accent="violet"  onClick={hasAccess('users')        ? () => navigate('/users')       : undefined} />
         </div>
 
         {/* ══ CHARTS ROW ════════════════════════════════════ */}
@@ -776,12 +781,14 @@ export default function Dashboard() {
                 <h2 className="text-sm font-bold text-slate-900">Active Assignments</h2>
                 <p className="text-[10px] text-slate-400 mt-0.5">Currently assigned assets</p>
               </div>
-              <button onClick={() => navigate('/assignments')}
-                className="flex items-center gap-1.5 text-xs font-semibold text-blue-600
-                  hover:text-blue-700 transition"
-              >
-                View all <FiArrowRight size={11} />
-              </button>
+              {hasAccess('assignments') && (
+                <button onClick={() => navigate('/assignments')}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-blue-600
+                    hover:text-blue-700 transition"
+                >
+                  View all <FiArrowRight size={11} />
+                </button>
+              )}
             </div>
 
             {loadingM ? (
@@ -873,12 +880,14 @@ export default function Dashboard() {
                 <h2 className="text-sm font-bold text-slate-900">Recently Added Assets</h2>
                 <p className="text-[10px] text-slate-400 mt-0.5">Latest registered assets</p>
               </div>
-              <button onClick={() => navigate('/assets')}
-                className="flex items-center gap-1.5 text-xs font-semibold text-blue-600
-                  hover:text-blue-700 transition"
-              >
-                View all <FiArrowRight size={11} />
-              </button>
+              {hasAccess('assets') && (
+                <button onClick={() => navigate('/assets')}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-blue-600
+                    hover:text-blue-700 transition"
+                >
+                  View all <FiArrowRight size={11} />
+                </button>
+              )}
             </div>
 
             {loadingA ? (
@@ -895,10 +904,12 @@ export default function Dashboard() {
               <div className="flex flex-col items-center justify-center py-12">
                 <TbPackage size={28} className="text-slate-200 mb-2" />
                 <p className="text-sm text-slate-400">No assets yet</p>
-                <button onClick={() => navigate('/assets')}
-                  className="mt-2 text-xs text-blue-500 font-semibold hover:underline">
-                  Add your first asset →
-                </button>
+                {hasAccess('assets') && (
+                  <button onClick={() => navigate('/assets')}
+                    className="mt-2 text-xs text-blue-500 font-semibold hover:underline">
+                    Add your first asset →
+                  </button>
+                )}
               </div>
             ) : (
               <table className="w-full text-xs">
@@ -1015,11 +1026,11 @@ export default function Dashboard() {
             {/* Quick nav */}
             <div className="border-t border-slate-100 pt-3 space-y-1.5">
               {[
-                { label: 'Manage Assets',      path: '/assets'      },
-                { label: 'View Assignments',   path: '/assignments'  },
-                { label: 'Process Returns',    path: '/returns'      },
-                { label: 'Manage Users',       path: '/users'        },
-              ].map(({ label, path }) => (
+                { label: 'Manage Assets',    path: '/assets',      accessKey: 'assets'         },
+                { label: 'View Assignments', path: '/assignments',  accessKey: 'assignments'    },
+                { label: 'Process Returns',  path: '/returns',      accessKey: 'return-history' },
+                { label: 'Manage Users',     path: '/users',        accessKey: 'users'          },
+              ].filter(item => hasAccess(item.accessKey)).map(({ label, path }) => (
                 <button key={path}
                   onClick={() => navigate(path)}
                   className="w-full flex items-center justify-between px-3 py-2

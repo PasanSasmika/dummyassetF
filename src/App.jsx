@@ -28,6 +28,22 @@ import AuditLog from './pages/Audit';
 import HistoryPage from './pages/History';
 import SettingsPage from './pages/Settings';
 import SidebarAccessPage from './pages/SidebarAccess';
+const KEY_TO_PATH = {
+  dashboard:        '/dashboard',
+  assets:           '/assets',
+  salvaged:         '/salvaged',
+  assignments:      '/assignments',
+  'return-history': '/return-history',
+  'gate-passes':    '/gate-passes',
+  history:          '/history',
+  repairs:          '/repairs',
+  components:       '/locations',
+  users:            '/users',
+  departments:      '/departments',
+  audit:            '/audit',
+  settings:         '/settings',
+};
+
 // ─── Protected Route ─────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
   const { user } = useSelector(state => state.auth);
@@ -36,7 +52,11 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const { user } = useSelector(state => state.auth);
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  if (!user) return children;
+  if (user.is_super_admin) return <Navigate to="/dashboard" replace />;
+  const access = user.sidebar_access || [];
+  const firstPath = access.map(k => KEY_TO_PATH[k]).find(Boolean) || '/dashboard';
+  return <Navigate to={firstPath} replace />;
 };
 
 const ResetPasswordRoute = ({ children }) => {
