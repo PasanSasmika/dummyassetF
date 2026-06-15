@@ -58,9 +58,12 @@ export default function Assets() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const { user }            = useSelector(s => s.auth);
   const { list: rawList, loading, error, success, saving } = useSelector(s => s.assets);
   const { list: rawDepts }  = useSelector(s => s.departments);
   const { list: rawDesigs } = useSelector(s => s.designations);
+
+  const canWrite = user?.is_super_admin === true || (user?.sidebar_access || []).includes('assets');
 
   const list         = safeList(rawList);
   const departments  = safeList(rawDepts);
@@ -210,18 +213,20 @@ export default function Assets() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => setShowBulk(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-cream hover:bg-brand-cream-light
-              text-brand-dark text-sm font-semibold rounded-lg transition-colors duration-150">
-            <FiUploadCloud size={15} /> Bulk Import
-          </button>
-          <button onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-green hover:bg-brand-green-dark
-              text-brand-cream-light text-sm font-semibold rounded-lg transition-colors duration-150 shadow-sm">
-            <span className="text-lg leading-none">+</span> Add Asset
-          </button>
-        </div>
+        {canWrite && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => setShowBulk(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-cream hover:bg-brand-cream-light
+                text-brand-dark text-sm font-semibold rounded-lg transition-colors duration-150">
+              <FiUploadCloud size={15} /> Bulk Import
+            </button>
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-green hover:bg-brand-green-dark
+                text-brand-cream-light text-sm font-semibold rounded-lg transition-colors duration-150 shadow-sm">
+              <span className="text-lg leading-none">+</span> Add Asset
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Table ── */}

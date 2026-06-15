@@ -45,7 +45,7 @@ export default function MigrationPanel() {
     setConnLoading(true);
     setConnResult(null);
     try {
-      const { data } = await API.get('/migration/test-connection', { headers });
+      const { data } = await API.get('/migration/test-connection', { headers, timeout: 30000 });
       setConnResult({ ok: true, ...data });
     } catch (err) {
       setConnResult({ ok: false, message: err.response?.data?.message || 'Connection failed.' });
@@ -58,7 +58,7 @@ export default function MigrationPanel() {
     setStatusLoading(true);
     setStatusError('');
     try {
-      const { data } = await API.get('/migration/status', { headers });
+      const { data } = await API.get('/migration/status', { headers, timeout: 30000 });
       setStatus(data);
     } catch (err) {
       setStatusError(err.response?.data?.message || 'Failed to fetch migration status.');
@@ -73,7 +73,7 @@ export default function MigrationPanel() {
     setRunSuccess(false);
     setActiveOutput('run');
     try {
-      const { data } = await API.post('/migration/run', {}, { headers });
+      const { data } = await API.post('/migration/run', {}, { headers, timeout: 120000 });
       setRunLogs(data.logs || []);
       setRunSuccess(data.success);
       fetchStatus();
@@ -92,7 +92,7 @@ export default function MigrationPanel() {
     setSeedSuccess(false);
     setActiveOutput('seed');
     try {
-      const { data } = await API.post('/migration/seed', {}, { headers });
+      const { data } = await API.post('/migration/seed', {}, { headers, timeout: 60000 });
       setSeedLogs(data.logs || []);
       setSeedSuccess(data.success);
     } catch (err) {

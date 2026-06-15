@@ -856,6 +856,35 @@ const AssignNoteRow = ({ entry }) => {
   );
 };
 
+// ─── Repair Document Row ─────────────────────────────────
+const RepairDocRow = ({ repair }) => {
+  const ss = REPAIR_STATUS_STYLES[repair.status] || REPAIR_STATUS_STYLES['Pending'];
+  return (
+    <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-amber-100 bg-amber-50/40 hover:bg-amber-50 transition">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+          <p className="text-xs font-black text-slate-700 truncate max-w-[180px]">
+            {repair.repair_type} Repair — Doc #{repair.id}
+          </p>
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${ss.bg} ${ss.text}`}>{repair.status}</span>
+          {repair.warranty_covered
+            ? <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded">WARRANTY</span>
+            : null}
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
+          {repair.vendor_name && <span className="flex items-center gap-1"><TbTool size={10} />{repair.vendor_name}</span>}
+          <span className="flex items-center gap-1"><FiCalendar size={10} />{fmt(repair.start_date)}</span>
+          {repair.description && <span className="truncate max-w-[140px]">{repair.description}</span>}
+        </div>
+      </div>
+      <a href={fileUrl(repair.warranty_document)} target="_blank" rel="noreferrer"
+        className="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold rounded-lg transition">
+        <FiExternalLink size={10} /> View
+      </a>
+    </div>
+  );
+};
+
 // ─── Return Note Row ──────────────────────────────────────
 const ReturnNoteRow = ({ entry }) => (
   <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition">
@@ -920,9 +949,11 @@ export default function AssetDetail() {
   const [openGP, setOpenGP] = useState(true);
   const [openAN, setOpenAN] = useState(false);
   const [openRN, setOpenRN] = useState(false);
+  const [openRD, setOpenRD] = useState(true);
   const [gpSearch, setGpSearch] = useState('');
   const [anSearch, setAnSearch] = useState('');
   const [rnSearch, setRnSearch] = useState('');
+  const [rdSearch, setRdSearch] = useState('');
 
   useEffect(() => {
     dispatch(fetchAssetById(id));
@@ -1009,9 +1040,12 @@ export default function AssetDetail() {
     return list.filter(e => fields.some(f => String(e[f] || '').toLowerCase().includes(lower)));
   };
 
+  const rdEntries  = safeRepairs.filter(r => !!r.warranty_document);
+
   const filteredGP = docSearch(gpEntries, gpSearch, ['gate_pass_doc_name', 'assigned_to_name', 'assignment_date', 'gate_pass_doc_uploaded_at']);
   const filteredAN = docSearch(anEntries, anSearch, ['assign_doc_name', 'assigned_to_name', 'assignment_date', 'assign_doc_uploaded_at']);
   const filteredRN = docSearch(rnEntries, rnSearch, ['return_doc_name', 'assigned_to_name', 'actual_return_date', 'return_doc_uploaded_at']);
+  const filteredRD = docSearch(rdEntries, rdSearch, ['repair_type', 'vendor_name', 'description']);
 
   // ── Category permission flags (mirrors AssetFormModal) ──
   const cat              = asset.category;
@@ -1381,6 +1415,33 @@ export default function AssetDetail() {
                 </div>
               )}
             </DocAccordion>
+
+            {/* Repair Documents */}
+            {showRepairOption && (
+              <DocAccordion
+                title="Repair Documents" icon={TbTool} accent="#d97706"
+                count={rdEntries.length}
+                open={openRD} onToggle={() => setOpenRD(o => !o)}
+                search={rdSearch} onSearch={setRdSearch}
+                placeholder="Search by type, vendor, description..."
+              >
+                {filteredRD.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-amber-100 rounded-xl">
+                    <TbTool size={32} className="text-amber-200 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-slate-500">
+                      {rdEntries.length === 0 ? 'No repair documents uploaded' : 'No results'}
+                    </p>
+                    {rdEntries.length === 0 && (
+                      <p className="text-xs text-slate-400 mt-1">Documents uploaded during repair creation appear here.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredRD.map(r => <RepairDocRow key={r.id} repair={r} />)}
+                  </div>
+                )}
+              </DocAccordion>
+            )}
 
             {/* Assignment Notes */}
             <DocAccordion
